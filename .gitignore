@@ -1,0 +1,11 @@
+/.idea
+/vendor
+/testbench
+/.phpunit.result.cache
+/composer.lock
+/cghooks.lock
+/.env
+/tests/Browser/console
+/tests/Browser/screenshots
+/tests/database/database.sqlite
+/tests/database/database.sqlite-journal

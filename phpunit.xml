@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php"
+         backupGlobals="false"
+         backupStaticAttributes="false"
+         colors="true"
+         verbose="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         cacheResult="false">
+    <testsuites>
+        <testsuite name="Package">
+            <directory suffix="Test.php">./tests/</directory>
+        </testsuite>
+    </testsuites>
+    <filter>
+        <whitelist>
+            <directory>src/</directory>
+        </whitelist>
+    </filter>
+    <php>
+        <env name="REDIS_HOST" value="0.0.0.0"/>
+        <env name="REDIS_PORT" value="6379"/>
+        <env name="REDIS_DB" value="5"/>
+        <env name="REDIS_PASSWORD" value=""/>
+        <env name="CACHE_DRIVER" value="redis"/>
+        <env name="PKGKIT_CDN_KEY" value=""/>
+        <env name="XML_URL" value=""/>
+        <env name="LOGIN" value=""/>
+        <env name="PASS" value=""/>
+        <env name="WIDE_STORE_OVH_URL" value=""/>
+        <env name="WIDE_STORE_OVH_USER" value=""/>
+        <env name="WIDE_STORE_OVH_PASS" value=""/>
+        <env name="WIDE_STORE_OVH_USER_DOMAIN" value=""/>
+        <env name="WIDE_STORE_OVH_REGION" value=""/>
+        <env name="WIDE_STORE_OVH_TENANT_NAME" value=""/>
+        <env name="WIDE_STORE_OVH_CONTAINER" value=""/>
+        <env name="WIDE_STORE_OVH_PROJECT_ID" value=""/>
+        <env name="WIDE_STORE_OVH_URL_KEY" value=""/>
+        <env name="WIDE_STORE_OVH_CUSTOM_ENDPOINT" value=""/>
+    </php>
+</phpunit>
+

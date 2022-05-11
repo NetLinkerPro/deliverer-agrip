@@ -1,0 +1,127 @@
+{
+  "name": "netlinker/deliverer-agrip",
+  "type": "library",
+  "description": "NetLinker module for deliverer Agrip with front Awes.io.",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "NetLinker",
+      "email": "netlinkerpro@gmail.com",
+      "homepage": "https://netlinker.pro",
+      "role": "Developer"
+    }
+  ],
+  "homepage": "https://github.com/netlinkerpro/deliverer-agrip",
+  "keywords": [
+    "NetLinker",
+    "deliverer-agrip"
+  ],
+  "require": {
+    "awes-io/base-js": "^1.8",
+    "awes-io/context-menu": "^1.0",
+    "awes-io/filter-wrapper": "^1.1",
+    "awes-io/form-builder": "^1.3",
+    "awes-io/indigo-layout": "^1.10",
+    "awes-io/localization-helper": "^1.0",
+    "awes-io/modal-window": "^1.0",
+    "awes-io/repository": "^1.0",
+    "awes-io/system-notify": "^1.1",
+    "awes-io/table-builder": "^1.0",
+    "cybercog/laravel-ownership": "^5.2",
+    "ext-json": "*",
+    "guzzlehttp/guzzle": "^6.5",
+    "illuminate/support": "~5|~6|~7|~8",
+    "imper86/allegroapi": "5.1.9",
+    "netlinker/fair-queue": "^1.0",
+    "netlinker/wide-store": "^1.0",
+    "symfony/dom-crawler": "^5.0",
+    "symfony/browser-kit": "^5.0",
+    "symfony/css-selector": "^5.0",
+    "symfony/http-client": "^5.0",
+    "ext-zlib": "*",
+    "ext-xmlreader": "*",
+    "ext-libxml": "*",
+    "ext-simplexml": "*",
+    "ashallendesign/laravel-exchange-rates": "^2.1",
+    "netlinker/kind-prestashop": "^1.0",
+    "ext-fileinfo": "*",
+    "ext-curl": "*",
+    "netlinker/laravel-api-baselinker": "^1.0",
+    "maatwebsite/excel": "^3.1",
+    "ext-ftp": "*",
+    "ext-dom": "*",
+    "tecnickcom/tc-lib-barcode": "^1.15"
+  },
+  "require-dev": {
+    "brainmaestro/composer-git-hooks": "^2.8",
+    "jasonlewis/resource-watcher": "1.2.*",
+    "mockery/mockery": "^1.1",
+    "orchestra/testbench": "3.8.*",
+    "orchestra/testbench-dusk": "3.8.*",
+    "phpunit/phpunit": "^8.0",
+    "sempro/phpunit-pretty-print": "^1.0",
+    "beyondcode/laravel-dump-server": "^1.3"
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://repo.pkgkit.com",
+      "options": {
+        "http": {
+          "header": [
+            "API-TOKEN: dd6553e92dcf6b171c35924a6dc63daaec412f44e2cab6f42e00ebb14fc4ce96"
+          ]
+        }
+      }
+    },
+    {
+      "name": "netlinker/laravel-api-baselinker",
+      "type": "vcs",
+      "url": "git@github.com:NetLinkerPro/laravel-api-baselinker.git"
+    },
+    {
+      "name": "netlinker/fair-queue",
+      "type": "vcs",
+      "url": "git@github.com:NetLinkerPro/fair-queue.git"
+    },
+    {
+      "name": "netlinker/lead-allegro",
+      "type": "vcs",
+      "url": "git@github.com:NetLinkerPro/lead-allegro.git"
+    },
+    {
+      "name": "netlinker/wide-store",
+      "type": "vcs",
+      "url": "git@github.com:NetLinkerPro/wide-store.git"
+    },
+    {
+      "name": "netlinker/kind-prestashop",
+      "type": "vcs",
+      "url": "git@github.com:NetLinkerPro/kind-prestashop.git"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "NetLinker\\DelivererAgrip\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "NetLinker\\DelivererAgrip\\Tests\\": "tests"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "NetLinker\\DelivererAgrip\\DelivererAgripServiceProvider"
+      ],
+      "aliases": {
+        "DelivererAgrip": "NetLinker\\DelivererAgrip\\Facades\\DelivererAgrip"
+      }
+    }
+  },
+  "scripts": {
+    "pre-push": "./vendor/bin/phpunit && echo pushing!",
+    "add-auto-test": "./vendor/bin/cghooks add --no-lock"
+  }
+}

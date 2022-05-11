@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'add_products' => 'Dodawanie produktów od dostawcy :name',
+    'add_products_assigned_ean_ready' => 'Wczytano powiązane kody EAN z bazy danych',
+    'add_products_free_ean_ready' => 'Wczytano wolne kody EAN z pliku XLSX',
+    'add_products_api_categories_ready' => 'Wczytano kategorie z API',
+    'add_products_api_products_ready' => 'Wczytano produkty z API',
+    'add_products_categories_ready' => 'Dodano kategorie do bazy danych',
+    'add_products_products_ready' => 'Dodano produkty do bazy danych',
+    'add_products_identifiers_ready'  => 'Dodano identyfikatory do bazy danych',
+    'add_products_names_ready'=> 'Dodano nazwy do bazy danych',
+    'add_products_prices_ready'=> 'Dodano ceny do bazy danych',
+    'add_products_taxes_ready'=> 'Dodano podatki do bazy danych',
+    'add_products_stocks_ready'=> 'Dodano dostępności do bazy danych',
+    'add_products_images_ready'=> 'Dodano obrazki do bazy danych',
+    'add_products_exist_products_ready' => 'Wczytano istniejące produkty z bazy danych',
+    'add_shop_products' => 'Dodawanie produktów do magazynu od dostawcy :name',
+    'add_and_update_my_prices_stocks'=> 'Dodawanie i aktualizacja cen i dostępności od dostawcy :name',
+    'add_and_update_shops'=> 'Dodawanie i aktualizacja magazynów od dostawcy :name',
+    'add_products_save_assigned_ean_ready'=> 'Zapisano powiązane kody EAN dla dostawcy :name',
+    'update_my_prices_stocks' => 'Aktualizacja moich cen i dostępności dla dostawcy :name',
+    'update_prices_stocks' => 'Aktualizacja ogólnych cen i dostępności dla dostawcy :name',
+    'update_products' => 'Aktualizacja produktów dla dostawcy :name',
+    'update_shop_products' => 'Aktualizacja produktów do magazynu od dostawcy :name',
+];
