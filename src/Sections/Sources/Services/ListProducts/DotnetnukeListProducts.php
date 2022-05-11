@@ -88,6 +88,9 @@ class DotnetnukeListProducts implements ListProducts
     {
         $dataId = $this->getAttributeCrawler($containerProduct, 'data');
         $crawlerDetailProduct = $this->getCrawlerDetailProduct($dataId, $containerProduct);
+        if (!$crawlerDetailProduct->count() || !Str::contains($crawlerDetailProduct->html(), 'trExtra_')){
+            return null;
+        }
         $id = $this->getIdProduct($crawlerDetailProduct);
         $infoPrice = $this->getInfoPrice($crawlerDetailProduct);
         $price = $infoPrice['price_netto'];
