@@ -115,6 +115,7 @@ class DotnetnukeListProducts implements ListProducts
         if ($ean) {
             $product->addAttribute('EAN', $ean, 100);
         }
+        $product->setDescription('');
         $product->check();
         return $product;
     }
