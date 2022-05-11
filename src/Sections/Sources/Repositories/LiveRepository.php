@@ -6,6 +6,7 @@ use Generator;
 use NetLinker\DelivererAgrip\Sections\Sources\Repositories\Contracts\LiveRepository as LiveRepositoryContract;
 use NetLinker\DelivererAgrip\Sections\Sources\Services\ListProducts\Comarch2ListProducts;
 use NetLinker\DelivererAgrip\Sections\Sources\Services\ListProducts\Contracts\ListProducts;
+use NetLinker\DelivererAgrip\Sections\Sources\Services\ListProducts\DotnetnukeListProducts;
 use NetLinker\DelivererAgrip\Sections\Sources\Services\ListProducts\Ftp2ListProducts;
 use NetLinker\DelivererAgrip\Sections\Sources\Services\ListProducts\Prestashop2ListProducts;
 use NetLinker\DelivererAgrip\Sections\Sources\Services\ListProducts\XmlSkyshopListProducts;
@@ -26,10 +27,9 @@ class LiveRepository implements LiveRepositoryContract
      */
     public function __construct(array $configuration = [])
     {
-        $this->listProducts = app(Comarch2ListProducts::class, [
+        $this->listProducts = app(DotnetnukeListProducts::class, [
             'login' =>$configuration['login'],
             'password' =>$configuration['pass'],
-            'login2' =>$configuration['login2'],
         ]);
     }
 

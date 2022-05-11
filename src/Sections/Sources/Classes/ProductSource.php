@@ -569,7 +569,7 @@ class ProductSource
         if (strlen($this->getName()) > 255){
             throw new DelivererAgripException('Name products is too long.');
         }
-        if (!$this->getDescription()){
+        if ($this->getDescription() === null){
             throw new DelivererAgripException('Not found description.');
         }
         foreach ($this->getAttributes() as $attribute){
