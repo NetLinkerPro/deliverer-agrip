@@ -81,46 +81,51 @@ class DotnetnukeListProducts implements ListProducts
      * Get product
      *
      * @param Crawler $containerProduct
-     * @return ProductSource|null
+     * @return ProductSource[]
      * @throws DelivererAgripException
      */
-    private function getProduct(Crawler $containerProduct, CategorySource $category): ?ProductSource
+    private function getProduct(Crawler $containerProduct, CategorySource $category): array
     {
         $dataId = $this->getAttributeCrawler($containerProduct, 'data');
         $crawlerDetailProduct = $this->getCrawlerDetailProduct($dataId, $containerProduct);
-        if (!$crawlerDetailProduct->count() || !Str::contains($crawlerDetailProduct->html(), 'trExtra_')){
-            return null;
+        $products = [];
+        if (!$crawlerDetailProduct->count() || !Str::contains($crawlerDetailProduct->html(), 'trExtra_')) {
+            return $products;
         }
-        $id = $this->getIdProduct($crawlerDetailProduct);
-        $infoPrice = $this->getInfoPrice($crawlerDetailProduct);
-        $price = $infoPrice['price_netto'];
-        if (!$price) {
-            return null;
-        }
-        $stock = $infoPrice['quantity'];
-        $availability = 1;
-        $url = 'https://www.argip.com.pl/Produkty/Zakupy.aspx?data_id=' . $dataId;
-        $product = new ProductSource($id, $url);
-        $product->setPrice($price);
-        $product->setStock($stock);
-        $product->setAvailability($availability);
-        $product->addCategory($category);
-        $product->setTax(23);
+        $countPositions = $this->countPositions($crawlerDetailProduct);
+        for ($i = 0; $i < $countPositions; $i++) {
+            $id = $this->getIdProduct($crawlerDetailProduct, $i);
+            $infoPrice = $this->getInfoPrice($crawlerDetailProduct, $i);
+            $price = $infoPrice['price_netto'];
+            if (!$price) {
+                continue;
+            }
+            $stock = $infoPrice['quantity'];
+            $availability = 1;
+            $url = 'https://www.argip.com.pl/Produkty/Zakupy.aspx?data_id=' . $dataId;
+            $product = new ProductSource($id, $url);
+            $product->setPrice($price);
+            $product->setStock($stock);
+            $product->setAvailability($availability);
+            $product->addCategory($category);
+            $product->setTax(23);
 
-        $product->setProperty('unit', 'szt.');
-        $name = $this->getName($crawlerDetailProduct, $infoPrice);
-        $product->setName($name);
-        $sku = $this->getTrExtra('Indeks', $crawlerDetailProduct);
-        if ($sku) {
-            $product->addAttribute('SKU', $sku, 50);
+            $product->setProperty('unit', 'szt.');
+            $name = $this->getName($crawlerDetailProduct, $infoPrice);
+            $product->setName($name);
+            $sku = $this->getTrExtra('Indeks', $crawlerDetailProduct, $i);
+            if ($sku) {
+                $product->addAttribute('SKU', $sku, 50);
+            }
+            $ean = $this->getTrExtra('Podst. kod ean', $crawlerDetailProduct, $i);
+            if ($ean) {
+                $product->addAttribute('EAN', $ean, 100);
+            }
+            $product->setDescription('');
+            $product->check();
+            array_push($products, $product);
         }
-        $ean = $this->getTrExtra('Podst. kod ean', $crawlerDetailProduct);
-        if ($ean) {
-            $product->addAttribute('EAN', $ean, 100);
-        }
-        $product->setDescription('');
-        $product->check();
-        return $product;
+        return $products;
     }
 
     /**
@@ -278,8 +283,8 @@ class DotnetnukeListProducts implements ListProducts
     {
         $products = [];
         $crawlerPage->filter('td.cclick')->each(function (Crawler $td) use (&$products, &$category) {
-            $product = $this->getProduct($td, $category);
-            if ($product) {
+            $products = $this->getProduct($td, $category);
+            foreach ($products as $product){
                 array_push($products, $product);
             }
         });
@@ -398,9 +403,9 @@ class DotnetnukeListProducts implements ListProducts
      * @return string
      * @throws DelivererAgripException
      */
-    private function getIdProduct(Crawler $containerProduct): string
+    private function getIdProduct(Crawler $containerProduct, $position): string
     {
-        $id = $this->getTrExtra('ID produktu', $containerProduct);
+        $id = $this->getTrExtra('ID produktu', $containerProduct, $position);
         if (!$id) {
             throw new DelivererAgripException('Not found ID product.');
         }
@@ -716,13 +721,17 @@ class DotnetnukeListProducts implements ListProducts
         return $this->getCrawler($dataCategories['result'] ?? '');
     }
 
-    private function getTrExtra(string $key, Crawler $containerProduct): string
+    private function getTrExtra(string $key, Crawler $containerProduct, int $position): string
     {
         $tr = null;
-        $containerProduct->filter('tr')->each(function (Crawler $trFound) use (&$tr) {
+        $foundPosition = 0;
+        $containerProduct->filter('tr')->each(function (Crawler $trFound) use (&$tr,&$position,  &$foundPosition) {
             $idElement = $this->getAttributeCrawler($trFound, 'id');
-            if (Str::startsWith($idElement, 'trExtra_')) {
-                $tr = $trFound;
+            if (!$tr && Str::startsWith($idElement, 'trExtra_')) {
+                if ($position === $foundPosition){
+                    $tr = $trFound;
+                }
+                $foundPosition++;
             }
         });
         $value = '';
@@ -736,10 +745,10 @@ class DotnetnukeListProducts implements ListProducts
                 }
             }
         });
-        return $value === '-' ? '': $value;
+        return $value === '-' ? '' : $value;
     }
 
-    private function getInfoPrice(Crawler $crawlerDetailProduct): array
+    private function getInfoPrice(Crawler $crawlerDetailProduct, int $position): array
     {
         $html = $crawlerDetailProduct->html();
         $priceNettoForQuantity = explode('ceny netto za ', $html)[1];
@@ -758,13 +767,14 @@ class DotnetnukeListProducts implements ListProducts
         if ($checkInPackPosition !== 'Opakowanie (szt)') {
             throw new DelivererAgripException('Valid check in pack position');
         }
-        $priceNetto = $this->getTextCrawler($crawlerDetailProduct->filter('table tr')->eq(2)->filter('td')->eq(2));
+        $trMain = $this->getTrMain($crawlerDetailProduct, $position);
+        $priceNetto = $this->getTextCrawler($trMain->filter('td')->eq(2));
         $priceNetto = str_replace(['&nbsp;', ' '], '', $priceNetto);
         $priceNetto = $this->extractFloat(str_replace(',', '.', $priceNetto));
-        $inPack = $this->getTextCrawler($crawlerDetailProduct->filter('table tr')->eq(2)->filter('td')->eq(6));
+        $inPack = $this->getTextCrawler($trMain->filter('td')->eq(6));
         $inPack = str_replace(['&nbsp;', ' '], '', $inPack);
         $inPack = $this->extractInteger(str_replace(',', '.', $inPack));
-        $quantity = $this->getTrExtra('Stan dostępny', $crawlerDetailProduct);
+        $quantity = $this->getTrExtra('Stan dostępny', $crawlerDetailProduct, $position);
         if (!Str::contains($quantity, 'opak')) {
             throw new DelivererAgripException('Invalid quantity');
         }
@@ -786,6 +796,34 @@ class DotnetnukeListProducts implements ListProducts
         $name .= ' ' . $this->getTextCrawler($crawlerDetailProduct->filter('h2'));
         $name .= sprintf(' /%s%s', $infoPrice['in_pack'], $infoPrice['price_nett_for_unit']);
         return $name;
+    }
+
+    private function countPositions(Crawler $crawlerDetailProduct): int
+    {
+        $count = 0;
+        $crawlerDetailProduct->filter('tr')->each(function (Crawler $trFound) use (&$count) {
+            $idElement = $this->getAttributeCrawler($trFound, 'id');
+            if (Str::startsWith($idElement, 'trExtra_')) {
+                $count++;
+            }
+        });
+        return $count;
+    }
+
+    private function getTrMain(Crawler $crawlerDetailProduct, int $position)
+    {
+        $tr = null;
+        $foundPosition = 0;
+        $crawlerDetailProduct->filter('tr')->each(function (Crawler $trFound) use (&$tr,&$position,  &$foundPosition) {
+            $idElement = $this->getAttributeCrawler($trFound, 'id');
+            if (!$tr && Str::startsWith($idElement, 'trMain_')) {
+                if ($position === $foundPosition){
+                    $tr = $trFound;
+                }
+                $foundPosition++;
+            }
+        });
+        return $tr;
     }
 
 }
