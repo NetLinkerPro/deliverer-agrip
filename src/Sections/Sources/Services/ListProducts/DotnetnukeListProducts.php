@@ -285,7 +285,7 @@ class DotnetnukeListProducts implements ListProducts
         $crawlerPage->filter('td.cclick')->each(function (Crawler $td) use (&$products, &$category) {
             $products = $this->getProduct($td, $category);
             foreach ($products as $product){
-                array_push($products, $product);
+                $products[] = $product;
             }
         });
         return $products;
