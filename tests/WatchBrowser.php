@@ -93,7 +93,7 @@ class WatchBrowser extends BrowserTestCase
             'owner_supervisor_uuid' => Auth::user()->owner_uuid,
             'update_exist_images_disk' => false,
             'max_width_images_disk' => 800,
-            'limit_products' => '500',
+            'limit_products' => '5',
         ]);
 
         $configuration = Configuration::updateOrCreate([
@@ -143,10 +143,16 @@ class WatchBrowser extends BrowserTestCase
             'name' => 'Agrip'
         ]);
 
-        AddProductsJob::dispatchNow(['setting' => $setting->toArray()]);
-//        UpdateProductsJob::dispatchNow(['setting' => $setting->toArray()]);
+//        AddProductsJob::dispatchNow(['setting' => $setting->toArray()]);
+        UpdateProductsJob::dispatchNow(['setting' => $setting->toArray()]);
 
-        AddShopProductsJob::dispatchNow([
+//        AddShopProductsJob::dispatchNow([
+//            'shop_uuid' => $shop->uuid,
+//            'owner_uuid' => Auth::user()->owner_uuid,
+//            'configuration_uuid' =>$configuration->uuid,
+//        ]);
+
+        UpdateShopProductsJob::dispatchNow([
             'shop_uuid' => $shop->uuid,
             'owner_uuid' => Auth::user()->owner_uuid,
             'configuration_uuid' =>$configuration->uuid,
