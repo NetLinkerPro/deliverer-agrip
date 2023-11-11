@@ -68,7 +68,16 @@ class DotnetnukeListProducts implements ListProducts
         }
     }
 
-    private function getProducts(CategorySource $category, CategorySource $deepestCategory): Generator
+    /**
+     * Get products
+     *
+     * @param CategorySource $category
+     * @param CategorySource $deepestCategory
+     * @return Generator
+     * @throws DelivererAgripException
+     * @throws GuzzleException
+     */
+    public function getProducts(CategorySource $category, CategorySource $deepestCategory): Generator
     {
         $crawlerPageProducts = $this->getCrawlerPageProducts($deepestCategory);
         $products = $this->getProductsCrawlerPage($category, $crawlerPageProducts);

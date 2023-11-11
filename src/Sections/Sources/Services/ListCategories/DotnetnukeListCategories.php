@@ -136,7 +136,7 @@ class DotnetnukeListCategories implements ListCategories
      * @throws DelivererAgripException
      * @throws GuzzleException
      */
-    private function getTreeCategoriesWebsite(Crawler $crawlerElements = null, ?CategorySource $parentCategory = null): array
+    public function getTreeCategoriesWebsite(Crawler $crawlerElements = null, ?CategorySource $parentCategory = null): array
     {
         if (!$crawlerElements) {
             $crawlerElements = $this->getCrawlerCategories()->filter('li');
