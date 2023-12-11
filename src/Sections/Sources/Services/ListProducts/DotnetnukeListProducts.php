@@ -30,6 +30,9 @@ class DotnetnukeListProducts implements ListProducts
     /** @var DotnetnukeListCategories $listCategories */
     protected $listCategories;
 
+    /** @var bool $correctStock */
+    protected $correctStock = 0;
+
     /**
      * SoapListProducts constructor
      *
@@ -63,6 +66,7 @@ class DotnetnukeListProducts implements ListProducts
             $deepestCategory = $this->getDeepestCategory($category);
             $products = $this->getProducts($category, $deepestCategory);
             foreach ($products as $product) {
+                $this->checkCorrectStock($product);
                 yield $product;
             }
         }
@@ -833,6 +837,22 @@ class DotnetnukeListProducts implements ListProducts
             }
         });
         return $tr;
+    }
+
+    /**
+     * @throws DelivererAgripException
+     */
+    private function checkCorrectStock(ProductSource $product): void
+    {
+        if (!$product->getStock()){
+            $this->correctStock++;
+        }
+        if ($product->getStock()){
+            $this->correctStock = 0;
+        }
+        if ($this->correctStock > 500){
+            throw new DelivererAgripException('Incorrect stock.');
+        }
     }
 
 }
