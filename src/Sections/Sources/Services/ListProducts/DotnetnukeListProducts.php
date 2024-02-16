@@ -157,6 +157,7 @@ class DotnetnukeListProducts implements ListProducts
             if ($ean) {
                 $product->addAttribute('EAN', $ean, 100);
             }
+            $product->addAttribute('weight', $infoPrice['weight'], 175);
             $this->explodeNameAsAttributes($product);
             $this->addImageProduct($crawlerDetailProduct, $product);
             $product->setDescription($this->getDescription($product));
