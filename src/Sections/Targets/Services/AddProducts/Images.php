@@ -43,7 +43,7 @@ class Images
             }
             $exception = null;
             $urlTarget = $this->tryOrNull(function() use (&$path, &$image){
-                return $this->addOrUpdateDiskImage($path, $image->getUrl());
+                return $this->addOrUpdateDiskImage($path, $image->getUrl(), 1200);
             }, 3, 15, $exception, true);
             if ($urlTarget){
                 Image::updateOrCreate([
