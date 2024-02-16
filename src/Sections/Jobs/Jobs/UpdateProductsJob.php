@@ -67,6 +67,7 @@ class UpdateProductsJob implements ShouldQueue
      */
     public function handle()
     {
+        $updateStarted = now();
         if ($this->isCanceled()){
             $this->setOutput([
                 'canceled' => true,
@@ -117,7 +118,7 @@ class UpdateProductsJob implements ShouldQueue
         $this->setOutput(['status' => 'success']);
         $this->setProgressNow($this->progressMax);
 
-        $this->updateShopProducts();
+        $this->updateShopProducts($updateStarted);
     }
 
     /**
@@ -136,7 +137,7 @@ class UpdateProductsJob implements ShouldQueue
         ]);
     }
 
-    private function updateShopProducts()
+    private function updateShopProducts($updateStarted = null)
     {
         $queue = $this->params['queues']['update_shop_products'] ?? null;
 
@@ -149,7 +150,8 @@ class UpdateProductsJob implements ShouldQueue
                 UpdateShopProductsJob::dispatch([
                     'shop_uuid' => $shop->uuid,
                     'owner_uuid' => $shop->owner_uuid,
-                    'configuration_uuid' => $shop->configuration_uuid
+                    'configuration_uuid' => $shop->configuration_uuid,
+                    'update_started' =>$updateStarted,
                 ])->onQueue($queue);
             }
 

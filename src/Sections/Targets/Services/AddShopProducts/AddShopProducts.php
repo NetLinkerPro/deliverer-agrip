@@ -98,20 +98,17 @@ class AddShopProducts
 
         $existProducts = $this->getExistProducts();
 
-        foreach ($this->getCursorNames() as $key => $name){
+        foreach ($this->getCursorProducts($updateStarted) as $key => $product) {
 
-            $product = Product::where('uuid', $name->product_uuid)->firstOrFail();
-            if (in_array($product->identifier, $existProducts)){
+            if (in_array($product->identifier, $existProducts)) {
                 continue;
             }
 
             $this->addProduct($product);
 
-            if ($key % 20 != 1){
-                yield [
-                    'progress_now' => (int) $key / 20,
-                ];
-            }
+            yield [
+                'progress_now' => $key + 1,
+            ];
         }
     }
 
@@ -125,6 +122,32 @@ class AddShopProducts
         $sizeProducts = $this->getSizeProducts();
 
         return ['progress_max' => (int) $sizeProducts / 20];
+    }
+
+    /**
+     * Get cursor products
+     *
+     * @return mixed
+     */
+    private function getCursorProducts($updateStarted = null)
+    {
+        return $this->buildQueryProducts($updateStarted)->cursor();
+    }
+
+    /**
+     * Build query products
+     *
+     * @return mixed
+     */
+    private function buildQueryProducts($updateStarted = null)
+    {
+        $query = Product::where('deliverer', 'agrip')
+            ->where('active', true)
+            ->where('complete', true);
+        if ($updateStarted) {
+            $query->where('updated_at', '>=', $updateStarted);
+        }
+        return $query;
     }
 
     /**

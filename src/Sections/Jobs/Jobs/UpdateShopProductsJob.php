@@ -80,9 +80,10 @@ class UpdateShopProductsJob implements ShouldQueue
             $this->addLog($message);
         });
 
+        $updateStarted = $this->params['update_started'] ??null;
         $service = new UpdateShopProducts($this->params['shop_uuid'], $this->params['owner_uuid'], $this->params['configuration_uuid']);
 
-        $steps = $service->updateShopProducts();
+        $steps = $service->updateShopProducts($updateStarted);
 
         foreach ($steps as $step){
 

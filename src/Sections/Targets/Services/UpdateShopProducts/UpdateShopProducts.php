@@ -19,8 +19,8 @@ class UpdateShopProducts extends AddShopProducts
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
      */
-    public function updateShopProducts(){
-       return $this->addShopProducts();
+    public function updateShopProducts($updateStarted = null){
+       return $this->addShopProducts($updateStarted);
     }
 
     /**
