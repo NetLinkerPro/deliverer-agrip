@@ -959,6 +959,10 @@ class DotnetnukeListProducts implements ListProducts
                 }
             }
             $categories[] = $categoryLast;
+            $deepestCategory = $this->getDeepestCategory($categoryLast);
+            $tableNumber = $dbCategory->toArray()['table_number'];
+            $categoryTableId = $deepestCategory->getId().'_t'.$tableNumber;
+            $deepestCategory->addChild(new CategorySource($categoryTableId, 'Tabela '.$tableNumber, $categoryTableId));
         }
         return $categories;
     }
