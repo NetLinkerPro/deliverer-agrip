@@ -4,18 +4,24 @@
 namespace NetLinker\DelivererAgrip\Sections\Targets\Services\AddProducts;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use NetLinker\DelivererAgrip\Exceptions\DelivererAgripException;
 use NetLinker\DelivererAgrip\Sections\Logger\Services\DelivererLogger;
+use NetLinker\DelivererAgrip\Sections\Settings\Repositories\SettingRepository;
 use NetLinker\DelivererAgrip\Sections\Sources\Classes\ProductSource;
 use NetLinker\DelivererAgrip\Sections\Targets\Traits\Imageable;
 use NetLinker\DelivererAgrip\Sections\Targets\Traits\Urlable;
 use NetLinker\WideStore\Sections\Images\Models\Image;
+use NetLinker\WideStore\Sections\ShopImages\Models\ShopImage;
+use NetLinker\WideStore\Sections\ShopProducts\Models\ShopProduct;
 
 class Images
 {
-
     use Imageable, Urlable;
+
+    private $settings;
 
     /**
      * Add to database
@@ -26,6 +32,7 @@ class Images
      */
     public function add(ProductSource $product, Model $productTarget)
     {
+        $this->deleteImageIfCan($product, $productTarget);
         $images = $product->getImages();
         foreach ($images as $index => &$image) {
             $path = sprintf('wide-store/images/agrip/%s', $image->getFilenameUnique());
@@ -64,6 +71,45 @@ class Images
             }
             $image->setProperty('contents', '');
         }
+    }
+
+    private function deleteImageIfCan(ProductSource $product, Model $productTarget)
+    {
+        if (isset($this->settings()['update_exist_images_disk']) && $this->settings()['update_exist_images_disk']){
+            /** @var Collection $images */
+            $images = Image::where('deliverer', 'walor')
+                ->where('product_uuid', $productTarget->uuid)
+                ->get();
+            foreach ($images as $image){
+                Storage::disk('wide_store')->delete($image->path);
+                $image->forceDelete();
+            }
+            $shopProducts = ShopProduct::where('deliverer', 'walor')
+                ->where('source_uuid', $productTarget->uuid)->get();
+            foreach ($shopProducts as $shopProduct){
+                /** @var Collection $images */
+                $shopImages = ShopImage::where('deliverer','walor')
+                    ->where('product_uuid', $shopProduct->uuid)
+                    ->get();
+                foreach ($shopImages as $shopImage){
+                    $shopImage->forceDelete();
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Settings
+     *
+     * @return array|null
+     */
+    public function settings(): ?array
+    {
+        if (!$this->settings) {
+            $this->settings = (new SettingRepository())->firstOrCreateValue();
+        }
+        return $this->settings;
     }
 
 }
