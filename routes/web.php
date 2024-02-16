@@ -20,8 +20,10 @@ Route::domain(config('deliverer-agrip.domain'))
     ->group(function () {
 
         # Assets AWES
+        Route::get('assets/images/{filename}', config('deliverer-agrip.controllers.assets') . '@getImage')
+            ->where('filename', '(.*)')
+            ->name('assets.image');
         Route::get('assets/{module}/{type}/{filename}', config('deliverer-agrip.controllers.assets') . '@getAwes')->name('assets.awes');
-        Route::get('assets/images/{filename}', config('deliverer-agrip.controllers.assets') . '@getImage')->name('assets.image');
     });
 
 Route::domain(config('deliverer-agrip.domain'))
@@ -85,5 +87,14 @@ Route::domain(config('deliverer-agrip.domain'))
             Route::delete('{id?}', config('deliverer-agrip.controllers.formatter_ranges') . '@destroy')->name('destroy');
             Route::get('ranges', config('deliverer-agrip.controllers.formatter_ranges') . '@ranges')->name('ranges');
             Route::get('actions', config('deliverer-agrip.controllers.formatter_ranges') . '@actions')->name('actions');
+        });
+
+        # Categories
+        Route::prefix('categories')->as('categories.')->group(function () {
+            Route::get('/', config('deliverer-agrip.controllers.categories') . '@index')->name('index');
+            Route::get('scope', config('deliverer-agrip.controllers.categories') . '@scope')->name('scope');
+            Route::post('store', config('deliverer-agrip.controllers.categories') . '@store')->name('store');
+            Route::patch('{id?}', config('deliverer-agrip.controllers.categories') . '@update')->name('update');
+            Route::delete('{id?}', config('deliverer-agrip.controllers.categories') . '@destroy')->name('destroy');
         });
     });

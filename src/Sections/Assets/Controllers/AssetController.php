@@ -49,6 +49,9 @@ class AssetController extends BaseController
     public function getImage(Request $request, $filename)
     {
         $path = __DIR__ . '/../../../../resources/images/' . $filename;
+        if (!File::exists($path)){
+            abort(404);
+        }
         $content = File::get($path);
         return Response::make($content, 200)->header('Content-Type', File::mimeType($path));
     }

@@ -57,6 +57,7 @@ class ProductRepository implements ProductRepositoryContract
             'login' =>$configuration['login'],
             'password' =>$configuration['pass'],
             'login2' =>$configuration['login2'],
+            'configuration' => $configuration,
         ]);
     }
 

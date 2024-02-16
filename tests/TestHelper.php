@@ -252,6 +252,8 @@ trait TestHelper
         DelivererLogger::listen(function ($message) {
             Log::debug($message);
         });
+
+//        Artisan::call('migrate', ['--force' => true]);
     }
 
     public static function getPackageProviders($app)

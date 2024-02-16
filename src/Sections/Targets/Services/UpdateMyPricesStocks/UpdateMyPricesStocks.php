@@ -91,6 +91,9 @@ class UpdateMyPricesStocks extends UpdateShopProducts
         $shopProducts = ShopProduct::where('shop_uuid', $this->shopUuid)
             ->where('identifier', $product->getId())
             ->get();
+        $shopProducts = $shopProducts->merge(ShopProduct::where('shop_uuid', $this->shopUuid)
+            ->where('identifier', '0_'.$product->getId())
+            ->get());
         if (!$shopProducts->count()) {
             DelivererLogger::log('Brak produktów '.$product->getId().' w bazie');
             return;

@@ -7,6 +7,7 @@ namespace NetLinker\DelivererAgrip\Sections\Targets\Services\AddProducts;
 use Illuminate\Database\Eloquent\Model;
 use NetLinker\DelivererAgrip\Sections\Logger\Services\DelivererLogger;
 use NetLinker\DelivererAgrip\Sections\Sources\Classes\ProductSource;
+use NetLinker\DelivererAgrip\Sections\Sources\Services\AssignNumberEan;
 use NetLinker\WideStore\Sections\Attributes\Models\Attribute;
 
 class Attributes
@@ -21,6 +22,7 @@ class Attributes
     public function add(ProductSource $product, Model $productTarget)
     {
         $attributes = $product->getAttributes();
+        $eanExists = false;
         foreach ($attributes as $attribute){
             $name = $attribute->getName();
             $value = $attribute->getValue();
@@ -33,6 +35,7 @@ class Attributes
             if ($name && $value){
                 if (mb_strtolower($name) === 'ean'){
                     $name = 'EAN';
+                    $eanExists = true;
                 } else if (mb_strtolower($name) === 'sku'){
                     $name = 'SKU';
                 }
@@ -47,6 +50,24 @@ class Attributes
                     'type' => 'default',
                 ]);
             }
+        }
+        if (!$eanExists){
+            /** @var AssignNumberEan $service */
+            $service = app(AssignNumberEan::class);
+
+            $freeEan = $service->getFreeEan();
+            $service->assign($freeEan, $product->getId());
+            Attribute::updateOrCreate([
+                'product_uuid' => $productTarget->uuid,
+                'deliverer' => 'agrip',
+                'name' => 'EAN',
+            ], [
+                'value' =>$freeEan,
+                'order' => 100,
+                'lang' => $product->getLanguage(),
+                'type' => 'default',
+            ]);
+
         }
     }
 }

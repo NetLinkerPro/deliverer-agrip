@@ -6,9 +6,12 @@ namespace NetLinker\DelivererAgrip\Sections\Sources\Services\ListProducts;
 use Generator;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use NetLinker\DelivererAgrip\Exceptions\DelivererAgripException;
+use NetLinker\DelivererAgrip\Sections\Categories\Models\Category;
 use NetLinker\DelivererAgrip\Sections\Logger\Services\DelivererLogger;
+use NetLinker\DelivererAgrip\Sections\Sources\Classes\AttributeSource;
 use NetLinker\DelivererAgrip\Sections\Sources\Classes\CategorySource;
 use NetLinker\DelivererAgrip\Sections\Sources\Classes\ProductSource;
 use NetLinker\DelivererAgrip\Sections\Sources\Services\ListCategories\DotnetnukeListCategories;
@@ -17,11 +20,14 @@ use NetLinker\DelivererAgrip\Sections\Sources\Services\WebsiteClients\Dotnetnuke
 use NetLinker\DelivererAgrip\Sections\Sources\Services\WebsiteClients\MagresnetWebsiteClient;
 use NetLinker\DelivererAgrip\Sections\Sources\Traits\CrawlerHtml;
 use NetLinker\DelivererAgrip\Sections\Sources\Traits\NumberExtractor;
-use NetLinker\WideStore\Sections\Categories\Models\Category;
+use NetLinker\WideStore\Sections\Attributes\Models\Attribute;
+use NetLinker\WideStore\Sections\Products\Models\Product;
 use Symfony\Component\DomCrawler\Crawler;
 
 class DotnetnukeListProducts implements ListProducts
 {
+    const DIR_IMAGES = __DIR__ .'/../../../../../resources/images';
+
     use CrawlerHtml, NumberExtractor;
 
     /** @var DotnetnukeWebsiteClient $websiteClient */
@@ -33,13 +39,16 @@ class DotnetnukeListProducts implements ListProducts
     /** @var bool $correctStock */
     protected $correctStock = 0;
 
+    protected $configuration;
+
     /**
      * SoapListProducts constructor
      *
      * @param string $login
      * @param string $password
+     * @param array $configuration
      */
-    public function __construct(string $login, string $password)
+    public function __construct(string $login, string $password, array $configuration)
     {
         $this->websiteClient = app(DotnetnukeWebsiteClient::class, [
             'login' => $login,
@@ -49,6 +58,7 @@ class DotnetnukeListProducts implements ListProducts
             'login' => $login,
             'password' => $password,
         ]);
+        $this->configuration = $configuration;
     }
 
     /**
@@ -61,7 +71,7 @@ class DotnetnukeListProducts implements ListProducts
      */
     public function get(?CategorySource $category = null): Generator
     {
-        $categories = $this->listCategories->get();
+        $categories = $this->getCategories();
         foreach ($categories as $category) {
             $deepestCategory = $this->getDeepestCategory($category);
             $products = $this->getProducts($category, $deepestCategory);
@@ -116,7 +126,8 @@ class DotnetnukeListProducts implements ListProducts
             $stock = $infoPrice['quantity'];
             $availability = 1;
             $url = 'https://www.argip.com.pl/Produkty/Zakupy.aspx?data_id=' . $dataId;
-            $product = new ProductSource($id, $url);
+            $identifier = '0_' . $id;
+            $product = new ProductSource($identifier, $url);
             $product->setPrice($price);
             $product->setStock($stock);
             $product->setAvailability($availability);
@@ -126,15 +137,26 @@ class DotnetnukeListProducts implements ListProducts
             $product->setProperty('unit', 'szt.');
             $name = $this->getName($crawlerDetailProduct, $infoPrice);
             $product->setName($name);
+            $product->addAttribute('Nazwa', $this->getTextCrawler($crawlerDetailProduct->filter('h1')), 10);
+            $product->addAttribute('Rozmiar', $this->getTextCrawler($crawlerDetailProduct->filter('h2')), 20);
+            $atest = $this->getAtest($crawlerDetailProduct, $i);
+            if ($atest) {
+                $product->addAttribute('Atest 3.1', $atest, 40);
+            }
+            $product->addAttribute('Ilość w opakowaniu', sprintf('%s %s', $infoPrice['in_pack'], $infoPrice['price_nett_for_unit']), 30);
             $sku = $this->getTrExtra('Indeks', $crawlerDetailProduct, $i);
             if ($sku) {
                 $product->addAttribute('SKU', $sku, 50);
             }
-            $ean = $this->getTrExtra('Podst. kod ean', $crawlerDetailProduct, $i);
+//            $ean = $this->getTrExtra('Podst. kod ean', $crawlerDetailProduct, $i);
+
+            $ean = $this->getEan($identifier);
             if ($ean) {
                 $product->addAttribute('EAN', $ean, 100);
             }
-            $product->setDescription('');
+            $this->explodeNameAsAttributes($product);
+            $this->addImageProduct($crawlerDetailProduct, $product);
+            $product->setDescription($this->getDescription($product));
             $product->check();
             array_push($products, $product);
         }
@@ -285,22 +307,78 @@ class DotnetnukeListProducts implements ListProducts
         return $this->getCrawler($contents);
     }
 
-    /**
-     * Get products data page
-     *
-     * @param Crawler $crawlerPage
-     * @return array
-     * @throws DelivererAgripException
-     */
     private function getProductsCrawlerPage(CategorySource $category, Crawler $crawlerPage): array
     {
         $products = [];
-        $crawlerPage->filter('td.cclick')->each(function (Crawler $td) use (&$products, &$category) {
-            $tdProducts = $this->getProduct($td, $category);
-            foreach ($tdProducts as $tdProduct){
-                $products[] = $tdProduct;
+        $totalCountCells = [];
+        $crawlerPage->filter('#dnn_ctr418_ArgipTree_tablelisc tr')->each(function (Crawler $tr) use (&$products, &$category, &$totalCountCells) {
+            $countTableNumber = 0;
+            $countCells = [];
+            $tr->filter('td')->each(function (Crawler $td) use (&$countCells, &$countTableNumber) {
+                $countTableNumber += Str::contains($td->attr('class'), 'cborleft') ? 1 : 0;
+                if ($countTableNumber) {
+                    if (!isset($countCells[$countTableNumber])) {
+                        $countCells[$countTableNumber] = 1;
+                    } else {
+                        $countCells[$countTableNumber]++;
+                    }
+                }
+            });
+            foreach ($countCells as $countTableNumber => $countCell) {
+                if (!isset($totalCountCells[$countTableNumber])) {
+                    $totalCountCells[$countTableNumber] = $countCell;
+                } else if ($countCell > $totalCountCells[$countTableNumber]) {
+                    $totalCountCells[$countTableNumber] = $countCell;
+                }
             }
         });
+//        dump(1);
+        $rowspan = 0;
+        $colspan = 0;
+        $positionColspan = 0;
+        $crawlerPage->filter('#dnn_ctr418_ArgipTree_tablelisc tr')->each(function (Crawler $tr) use (&$products, &$category, &$totalCountCells, &$rowspan, &$colspan, &$positionColspan) {
+            $countTd = 0;
+            $addedColspan = false;
+            $tr->filter('td')->each(function (Crawler $td) use (&$products, &$category, &$countTd, &$totalCountCells, &$rowspan, &$colspan, &$addedColspan, &$positionColspan) {
+                $idTd = $td->attr('id');
+                if ($idTd === 'k_309717') {
+                    dump(1);
+                }
+                if ($td->attr('rowspan')) {
+                    $rowspan = $td->attr('rowspan');
+                    $positionColspan = $countTd + 1;
+                }
+                if ($td->attr('colspan')) {
+                    $colspan = $td->attr('colspan');
+                }
+                if ($rowspan && !$addedColspan && $countTd + 1 >= $positionColspan) {
+                    $countTd += $colspan;
+                    $rowspan--;
+                    $addedColspan = true;
+                } else {
+                    $countTd++;
+                }
+                if (!$rowspan) {
+                    $colspan = 0;
+                }
+                $tableNumber = $category->getProperty('db')['table_number'];
+                $fromTd = ($tableNumber == 1) ? 0 : $totalCountCells[$tableNumber - 1] + 2;
+                $toTd = $fromTd + $totalCountCells[$tableNumber] - 2;
+
+                $cond1 = $countTd >= $fromTd;
+                $cond2 = $countTd <= $toTd;
+                if ($cond1 && $cond2) {
+                    if (Str::contains($td->attr('class'), 'cclick')) {
+
+                        $tdProducts = $this->getProduct($td, $category);
+                        foreach ($tdProducts as $tdProduct) {
+                            $products[] = $tdProduct;
+                        }
+                    }
+                }
+            });
+        });
+        DelivererLogger::log('Count products ' . sizeof($products));
         return $products;
     }
 
@@ -319,7 +397,7 @@ class DotnetnukeListProducts implements ListProducts
             RequestOptions::FORM_PARAMS => [
                 'ctx' => '13',
                 '__DNNCAPISCI' => 'dnn$ctr418$ArgipTree',
-                '__DNNCAPISCP' => '%7B%22method%22%3A%22GetLeaf%22%2C%22args%22%3A%7B%22itemid%22%3A%22' . $deepestCategory->getId() . '%22%7D%7D',
+                '__DNNCAPISCP' => '%7B%22method%22%3A%22GetLeaf%22%2C%22args%22%3A%7B%22itemid%22%3A%22' . $deepestCategory->getProperty('db')['item_id'] . '%22%7D%7D',
                 '__DNNCAPISCT' => '2'
             ]
         ]);
@@ -668,12 +746,13 @@ class DotnetnukeListProducts implements ListProducts
      */
     private function addImageProduct(Crawler $detailPageCrawler, ProductSource $product): void
     {
-        $image = $this->getParameterProduct('Zdjęcie', $detailPageCrawler);
-        if ($image) {
-            $id = explode('.', $image)[0];
-            $url = sprintf('http://212.180.197.238/ImageFromOferta.ashx?ID=%s', $id);
-            if ($id) {
-                $product->addImage(true, $id, $url, $image);
+        $deepestCategory = $this->getDeepestCategory($product->getCategories()[0]);
+        $prefixId = $deepestCategory->getProperty('db')['item_id'].'_'.$deepestCategory->getProperty('db')['table_number'];
+        $dir = self::DIR_IMAGES .'/'.$prefixId;
+        if (File::exists($dir)){
+            foreach (File::files($dir) as $index => $file){
+                $url = url(config('deliverer-agrip.prefix').'/assets/images/'.$prefixId.'/'.$file->getFilename());
+                $product->addImage(!$index, $prefixId.'_'.$index, $url, $file->getFilename());
             }
         }
     }
@@ -738,10 +817,10 @@ class DotnetnukeListProducts implements ListProducts
     {
         $tr = null;
         $foundPosition = 0;
-        $containerProduct->filter('tr')->each(function (Crawler $trFound) use (&$tr,&$position,  &$foundPosition) {
+        $containerProduct->filter('tr')->each(function (Crawler $trFound) use (&$tr, &$position, &$foundPosition) {
             $idElement = $this->getAttributeCrawler($trFound, 'id');
             if (!$tr && Str::startsWith($idElement, 'trExtra_')) {
-                if ($position === $foundPosition){
+                if ($position === $foundPosition) {
                     $tr = $trFound;
                 }
                 $foundPosition++;
@@ -827,10 +906,10 @@ class DotnetnukeListProducts implements ListProducts
     {
         $tr = null;
         $foundPosition = 0;
-        $crawlerDetailProduct->filter('tr')->each(function (Crawler $trFound) use (&$tr,&$position,  &$foundPosition) {
+        $crawlerDetailProduct->filter('tr')->each(function (Crawler $trFound) use (&$tr, &$position, &$foundPosition) {
             $idElement = $this->getAttributeCrawler($trFound, 'id');
             if (!$tr && Str::startsWith($idElement, 'trMain_')) {
-                if ($position === $foundPosition){
+                if ($position === $foundPosition) {
                     $tr = $trFound;
                 }
                 $foundPosition++;
@@ -844,14 +923,101 @@ class DotnetnukeListProducts implements ListProducts
      */
     private function checkCorrectStock(ProductSource $product): void
     {
-        if (!$product->getStock()){
+        if (!$product->getStock()) {
             $this->correctStock++;
         }
-        if ($product->getStock()){
+        if ($product->getStock()) {
             $this->correctStock = 0;
         }
-        if ($this->correctStock > 500){
+        if ($this->correctStock > 500) {
             throw new DelivererAgripException('Incorrect stock.');
+        }
+    }
+
+    private function getCategories(): array
+    {
+        $dbCategories = Category::where('owner_uuid', $this->configuration['settings']['owner_supervisor_uuid'])
+            ->where('active', true)
+            ->get();
+
+        $categories = [];
+        foreach ($dbCategories as $dbCategory) {
+            $name = $dbCategory->name;
+            $itemId = $dbCategory->item_id;
+            $nameExplode = array_reverse(explode('»', $name));
+            $categoryLast = null;
+            foreach ($nameExplode as $index => $title) {
+                $title = trim($title);
+                $idCategory = '0_' . $itemId . '_' . $index;
+                $categorySource = new CategorySource($idCategory, $title, $itemId,);
+                $categorySource->setProperty('db', $dbCategory->toArray());
+                if (!$categoryLast) {
+                    $categoryLast = $categorySource;
+                } else {
+                    $categorySource->addChild($categoryLast);
+                    $categoryLast = $categorySource;
+                }
+            }
+            $categories[] = $categoryLast;
+        }
+        return $categories;
+    }
+
+    private function getEan(string $identifier): ?string
+    {
+        $product = Product::where('deliverer', 'agrip')
+            ->where('identifier', $identifier)
+            ->first();
+        if ($product) {
+            $attribute = Attribute::where('product_uuid', $product->uuid)
+                ->where('name', 'EAN')
+                ->first();
+            if ($attribute) {
+                return $attribute->value;
+            }
+        }
+        return null;
+    }
+
+    private function getAtest(Crawler $crawlerDetailProduct, $position)
+    {
+        $atest = $this->getTrExtra('Atest 3.1', $crawlerDetailProduct, $position);
+        if ($atest == 'Dostępny') {
+            return 'Tak';
+        }
+        return null;
+    }
+
+    private function getDescription(ProductSource $product): ?string
+    {
+        $description = '<ul>';
+        /** @var AttributeSource $attribute */
+        foreach ($product->getAttributes() as $attribute){
+            if ($attribute->getOrder() >= 50){
+                continue;
+            }
+            if ($attribute->getName() == 'Nazwa'){
+                $description .= '<h1>'.$attribute->getValue().'</h1>';
+            } else {
+                $description .= '<li><b>'.$attribute->getName().'</b>: '.$attribute->getValue().'</li>';
+            }
+
+        }
+        $description .= '</ul>';
+        return $description;
+    }
+
+    private function explodeNameAsAttributes(ProductSource $product)
+    {
+        $h2 = $product->getAttributeValue('h2');
+        $order = 300;
+        foreach (explode('-', $h2) as $index => $item){
+            $order += 100;
+            $product->addAttribute('h2_1_'.$index, $item, $order);
+        }
+        foreach (explode('x', $h2) as $index => $item){
+            $order += 100;
+            $product->addAttribute('h2_2_'.$index, $item, $order);
         }
     }
 

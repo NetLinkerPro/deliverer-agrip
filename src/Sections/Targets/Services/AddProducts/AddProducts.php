@@ -114,6 +114,7 @@ class AddProducts
                 'token' => $this->settings()['token'] ?? '',
                 'debug' => $this->settings()['debug'] ?? false,
                 'mode' => $this->mode,
+                'settings' => $this->settings(),
             ],
         ]);
         $products = $productRepository->get();

@@ -2,10 +2,14 @@
 
 namespace NetLinker\DelivererAgrip\Tests;
 
+use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Laravel\Dusk\Browser;
+use NetLinker\DelivererAgrip\Sections\Categories\Models\Category;
 use NetLinker\DelivererAgrip\Sections\Configurations\Models\Configuration;
 use NetLinker\DelivererAgrip\Sections\Formatters\Models\Formatter;
 use NetLinker\DelivererAgrip\Sections\Jobs\Jobs\AddProductsJob;
@@ -13,6 +17,7 @@ use NetLinker\DelivererAgrip\Sections\Jobs\Jobs\AddShopProductsJob;
 use NetLinker\DelivererAgrip\Sections\Jobs\Jobs\UpdateProductsJob;
 use NetLinker\DelivererAgrip\Sections\Jobs\Jobs\UpdateShopProductsJob;
 use NetLinker\DelivererAgrip\Sections\Settings\Repositories\SettingRepository;
+use NetLinker\DelivererAgrip\Tests\Helpers\ChromeDriver;
 use NetLinker\DelivererAgrip\Tests\Helpers\SetupHelper;
 use NetLinker\DelivererAgrip\Tests\Stubs\Owner;
 use NetLinker\DelivererAgrip\Tests\Stubs\User;
@@ -25,7 +30,7 @@ use NetLinker\WideStore\Sections\Shops\Models\Shop;
 
 class WatchBrowser extends BrowserTestCase
 {
-
+//    use DatabaseMigrations;
     use SetupHelper;
 
     /**
@@ -49,6 +54,7 @@ class WatchBrowser extends BrowserTestCase
      */
     public function watch()
     {
+        ChromeDriver::startChromeDriver();
         $owner = factory(Owner::class)->create();
         factory(User::class)->create(['owner_uuid' => $owner->uuid,]);
         Auth::login(User::all()->first());
@@ -133,6 +139,9 @@ class WatchBrowser extends BrowserTestCase
             'description_type' => 'default',
         ]);
 
+       $this->addCategory();
+
+
         $shop = app()->make(Shop::class);
 
         $shop = $shop->updateOrCreate([
@@ -144,7 +153,7 @@ class WatchBrowser extends BrowserTestCase
         ]);
 
 //        AddProductsJob::dispatchNow(['setting' => $setting->toArray()]);
-        UpdateProductsJob::dispatchNow(['setting' => $setting->toArray()]);
+//        UpdateProductsJob::dispatchNow(['setting' => $setting->toArray()]);
 
 //        AddShopProductsJob::dispatchNow([
 //            'shop_uuid' => $shop->uuid,
@@ -152,20 +161,37 @@ class WatchBrowser extends BrowserTestCase
 //            'configuration_uuid' =>$configuration->uuid,
 //        ]);
 
-        UpdateShopProductsJob::dispatchNow([
-            'shop_uuid' => $shop->uuid,
-            'owner_uuid' => Auth::user()->owner_uuid,
-            'configuration_uuid' =>$configuration->uuid,
-        ]);
+//        UpdateShopProductsJob::dispatchNow([
+//            'shop_uuid' => $shop->uuid,
+//            'owner_uuid' => Auth::user()->owner_uuid,
+//            'configuration_uuid' =>$configuration->uuid,
+//        ]);
 
         $this->browse(function (Browser $browser) {
             TestHelper::maximizeBrowserToScreen($browser);
-            $browser->visit('/deliverer-agrip/settings');
+            $browser->visit('/deliverer-agrip/categories');
 
             TestHelper::browserWatch($browser, false, ['auto_deliverer_store_add_products', 'auto_deliverer_store_add_and_update_shop_products']);
         });
 
 
         $this->assertTrue(true);
+    }
+
+    public static function addCategory()
+    {
+        $category = Category::updateOrCreate([
+            'item_id' =>'4626',
+        ],[
+            'name' => '0 » Wyroby calowe »  Śruby »  z łbem walcowym gniazdem sześciokątnym ANSI B18.3 (~ISO 4762) »  gwint UNC, ASTM A574, bez pokrycia',
+            'description' => '',
+            'active' => true,
+            'uri' => 'https://www.argip.com.pl/Produkty/Zakupy/tabid/85/parentid/5456/product/wyroby-calowe/Default.aspx?__U=1708033541519',
+            'ctx' => '31',
+            'ctr' => '418',
+            'table_number' =>'1',
+            't' =>'2',
+            'data' =>null,
+        ]);
     }
 }

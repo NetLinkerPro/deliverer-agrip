@@ -85,8 +85,8 @@ return [
         'update_products' => \NetLinker\DelivererAgrip\Sections\Jobs\Jobs\UpdateProductsJob::class,
         'add_shop_products' => \NetLinker\DelivererAgrip\Sections\Jobs\Jobs\AddShopProductsJob::class,
         'update_shop_products' => \NetLinker\DelivererAgrip\Sections\Jobs\Jobs\UpdateShopProductsJob::class,
-        'update_my_prices_stocks' =>  \NetLinker\DelivererAgrip\Sections\Jobs\Jobs\UpdateMyPricesStocksJob::class,
-        'update_prices_stocks' =>  \NetLinker\DelivererAgrip\Sections\Jobs\Jobs\UpdatePricesStocksJob::class,
+        'update_my_prices_stocks' => \NetLinker\DelivererAgrip\Sections\Jobs\Jobs\UpdateMyPricesStocksJob::class,
+        'update_prices_stocks' => \NetLinker\DelivererAgrip\Sections\Jobs\Jobs\UpdatePricesStocksJob::class,
     ],
 
     /*
@@ -134,13 +134,15 @@ return [
 
         'configurations' => 'NetLinker\DelivererAgrip\Sections\Configurations\Controllers\ConfigurationController',
 
-        'introductions'=> 'NetLinker\DelivererAgrip\Sections\Introductions\Controllers\IntroductionController',
+        'introductions' => 'NetLinker\DelivererAgrip\Sections\Introductions\Controllers\IntroductionController',
 
         'settings' => 'NetLinker\DelivererAgrip\Sections\Settings\Controllers\SettingController',
 
         'formatters' => 'NetLinker\DelivererAgrip\Sections\Formatters\Controllers\FormatterController',
 
         'formatter_ranges' => 'NetLinker\DelivererAgrip\Sections\FormatterRanges\Controllers\FormatterRangeController',
+
+        'categories' => 'NetLinker\DelivererAgrip\Sections\Categories\Controllers\CategoryController',
     ],
 
     /*

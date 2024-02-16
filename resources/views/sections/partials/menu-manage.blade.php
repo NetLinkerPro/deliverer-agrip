@@ -7,5 +7,6 @@
         <cm-link href="{{route('deliverer-agrip.configurations.index')}}">   {{ __('deliverer-agrip::general.manage_configurations') }}</cm-link>
         <cm-link href="{{route('deliverer-agrip.formatters.index')}}">   {{ __('deliverer-agrip::general.manage_formatters') }}</cm-link>
         <cm-link href="{{route('deliverer-agrip.formatter_ranges.index')}}">   {{ __('deliverer-agrip::general.manage_formatter_ranges') }}</cm-link>
+        <cm-link href="{{route('deliverer-agrip.categories.index')}}">   Kategorie</cm-link>
     </context-menu>
 </div>
