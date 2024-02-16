@@ -755,7 +755,7 @@ class DotnetnukeListProducts implements ListProducts
         $dir = self::DIR_IMAGES .'/'.$prefixId;
         if (File::exists($dir)){
             foreach (File::files($dir) as $index => $file){
-                $url = url(config('deliverer-agrip.prefix').'/assets/images/'.$prefixId.'/'.$file->getFilename());
+                $url = url(config('deliverer-agrip.prefix').'/assets/images/'.$prefixId.'/'.$file->getFilename().'?t='.now()->format('YmDHis'));
                 $product->addImage(!$index, $prefixId.'_'.$index, $url, $file->getFilename());
             }
         }
