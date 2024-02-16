@@ -43,7 +43,7 @@ class Images
             }
             $exception = null;
             $urlTarget = $this->tryOrNull(function() use (&$path, &$image){
-                return $this->addOrUpdateDiskImage($path, $image, $image->getUrl(), 800, $image->getBackgroundFill(), $image->getExtension());
+                return $this->addOrUpdateDiskImage($path, $image->getUrl());
             }, 3, 15, $exception, true);
             if ($urlTarget){
                 Image::updateOrCreate([
@@ -75,7 +75,9 @@ class Images
 
     private function deleteImageIfCan(ProductSource $product, Model $productTarget)
     {
+        DelivererLogger::log('deleteImageIfCan '.$productTarget->identifier);
         if (isset($this->settings()['update_exist_images_disk']) && $this->settings()['update_exist_images_disk']){
+            DelivererLogger::log('can '.$productTarget->identifier);
             /** @var Collection $images */
             $images = Image::where('deliverer', 'walor')
                 ->where('product_uuid', $productTarget->uuid)

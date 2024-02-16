@@ -141,10 +141,13 @@ class DotnetnukeListProducts implements ListProducts
             $product->addAttribute('Rozmiar', $this->getTextCrawler($crawlerDetailProduct->filter('h2')), 20);
             $atest = $this->getAtest($crawlerDetailProduct, $i);
             if ($atest) {
-                $product->addAttribute('Atest 3.1', $atest, 40);
+                $product->addAttribute('Atest 3.1', $atest, 25);
             }
             $product->addAttribute('Ilość w opakowaniu', sprintf('%s %s', $infoPrice['in_pack'], $infoPrice['price_nett_for_unit']), 30);
-            $sku = $this->getTrExtra('Indeks', $crawlerDetailProduct, $i);
+
+            $product->addAttribute('Waga', str_replace('.', ',', $infoPrice['weight'].' kg'), 35);
+
+           $sku = $this->getTrExtra('Indeks', $crawlerDetailProduct, $i);
             if ($sku) {
                 $product->addAttribute('SKU', $sku, 50);
             }
@@ -866,6 +869,9 @@ class DotnetnukeListProducts implements ListProducts
         $inPack = $this->getTextCrawler($trMain->filter('td')->eq(6));
         $inPack = str_replace(['&nbsp;', ' '], '', $inPack);
         $inPack = $this->extractInteger(str_replace(',', '.', $inPack));
+        $weight = $this->getTextCrawler($trMain->filter('td')->eq(5));
+        $weight = str_replace(['&nbsp;', ' '], '', $weight);
+        $weight = $this->extractFloat(str_replace(',', '.', $weight));
         $quantity = $this->getTrExtra('Stan dostępny', $crawlerDetailProduct, $position);
         if (!Str::contains($quantity, 'opak')) {
             throw new DelivererAgripException('Invalid quantity');
@@ -879,6 +885,7 @@ class DotnetnukeListProducts implements ListProducts
             'price_netto' => $priceNetto,
             'in_pack' => $inPack,
             'quantity' => $quantity,
+            'weight' => $weight,
         ];
     }
 
@@ -996,14 +1003,15 @@ class DotnetnukeListProducts implements ListProducts
 
     private function getDescription(ProductSource $product): ?string
     {
-        $description = '<ul>';
+        $description = '<h1>'.$product->getAttributeValue('Nazwa').'</h1>';
+        $description .= '<ul>';
         /** @var AttributeSource $attribute */
         foreach ($product->getAttributes() as $attribute){
             if ($attribute->getOrder() >= 50){
                 continue;
             }
             if ($attribute->getName() == 'Nazwa'){
-                $description .= '<h1>'.$attribute->getValue().'</h1>';
+                continue;
             } else {
                 $description .= '<li><b>'.$attribute->getName().'</b>: '.$attribute->getValue().'</li>';
             }
