@@ -92,7 +92,7 @@ class AddShopProducts
      * @throws ServerExceptionInterface
      * @throws TransportExceptionInterface
      */
-    public function addShopProducts(){
+    public function addShopProducts($updateStarted = null){
 
         yield $this->getProgressMaxStep();
 
