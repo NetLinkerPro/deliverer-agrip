@@ -27,10 +27,7 @@ class StoreCategory extends FormRequest
     public function rules()
     {
         return [
-            'name' => ['required', 'string', 'max:255', Rule::unique('deliverer_agrip_categories')->where(function ($query) {
-                return $query->where('name', $this->name)
-                    ->where('owner_uuid', $this->getAuthOwnerUuid());
-            })],
+            'name' => 'required|string',
             'description' => 'nullable|string',
             'active' => 'required|boolean',
             'uri' => 'nullable|string',

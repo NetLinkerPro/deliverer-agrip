@@ -44,9 +44,10 @@ class UpdateMyPricesStocks extends UpdateShopProducts
     /**
      * Update shop products
      *
+     * @param null $updateStarted
      * @return Generator
      */
-    public function updateShopProducts(): Generator
+    public function updateShopProducts($updateStarted = null): Generator
     {
         $this->liveRepository = app(LiveRepository::class, [
             'configuration' => [
