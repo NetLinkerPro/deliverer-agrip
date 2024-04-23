@@ -27,6 +27,7 @@ use NetLinker\FairQueue\Sections\Horizons\Models\Horizon;
 use NetLinker\FairQueue\Sections\Queues\Models\Queue;
 use NetLinker\FairQueue\Sections\Supervisors\Models\Supervisor;
 use NetLinker\WideStore\Sections\Shops\Models\Shop;
+use Symfony\Component\Process\Process;
 
 class WatchBrowser extends BrowserTestCase
 {
@@ -54,7 +55,7 @@ class WatchBrowser extends BrowserTestCase
      */
     public function watch()
     {
-        ChromeDriver::startChromeDriver();
+//        ChromeDriver::startChromeDriver();
         $owner = factory(Owner::class)->create();
         factory(User::class)->create(['owner_uuid' => $owner->uuid,]);
         Auth::login(User::all()->first());

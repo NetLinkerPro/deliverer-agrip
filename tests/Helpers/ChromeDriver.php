@@ -28,7 +28,7 @@ trait ChromeDriver
     /**
      * Start the Chromedriver process.
      *
-     * @param  array  $arguments
+     * @param array $arguments
      * @return void
      *
      * @throws \RuntimeException
@@ -36,21 +36,25 @@ trait ChromeDriver
     public static function startChromeDriver(array $arguments = [])
     {
         static:: killProcessChromeDriver();
-
-        Log::debug(shell_exec('google-chrome --version'));
+        sleep(1);
+        if (Str::contains(php_uname(), 'Mac')) {
+            Log::debug(shell_exec('/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version'));
+        } else {
+            Log::debug(shell_exec('google-chrome --version'));
+        }
 
         $chromeDriver = realpath(__DIR__ . '/chromedriver');
 
-        if (!$chromeDriver){
+        if (!$chromeDriver) {
             throw new \Exception('Nie znaleziono sterownika chrome');
         }
 
-        $process = Process::fromShellCommandline($chromeDriver. ' --allowed-ips');
+        $process = Process::fromShellCommandline($chromeDriver);
         $process->start();
 
-        while(true){
+        while (true) {
             $o = $process->getOutput();
-            if (Str::contains($o, 'ChromeDriver was started successfully')){
+            if (Str::contains($o, 'ChromeDriver was started successfully')) {
                 break;
             }
         }
@@ -97,7 +101,7 @@ trait ChromeDriver
     /**
      * Build the process to run the Chromedriver.
      *
-     * @param  array  $arguments
+     * @param array $arguments
      * @return \Symfony\Component\Process\Process
      *
      * @throws \RuntimeException
@@ -110,7 +114,7 @@ trait ChromeDriver
     /**
      * Set the path to the custom Chromedriver.
      *
-     * @param  string  $path
+     * @param string $path
      * @return void
      */
     public static function useChromedriver($path)

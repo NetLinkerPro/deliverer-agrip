@@ -346,7 +346,7 @@ class DotnetnukeListProducts implements ListProducts
             $addedColspan = false;
             $tr->filter('td')->each(function (Crawler $td) use (&$products, &$category, &$countTd, &$totalCountCells, &$rowspan, &$colspan, &$addedColspan, &$positionColspan) {
                 $idTd = $td->attr('id');
-                if ($idTd === 'k_309717') {
+                if ($idTd === 'k_72642') {
                     dump(1);
                 }
                 if ($td->attr('rowspan')) {
@@ -368,10 +368,15 @@ class DotnetnukeListProducts implements ListProducts
                 }
                 $tableNumber = $category->getProperty('db')['table_number'];
                 $fromTd = ($tableNumber == 1) ? 0 : $totalCountCells[$tableNumber - 1] + 2;
-                $toTd = $fromTd + $totalCountCells[$tableNumber] - 2;
+                if ($tableNumber == 1){
+                    $toTd = $fromTd + $totalCountCells[$tableNumber] - 1;
+                } else {
+                    $toTd = $fromTd + $totalCountCells[$tableNumber] - 2;
+                }
+
 
                 $cond1 = $countTd >= $fromTd;
-                $cond2 = $countTd <= $toTd;
+                $cond2 = $countTd <= $toTd +1;
                 if ($cond1 && $cond2) {
                     if (Str::contains($td->attr('class'), 'cclick')) {
 
