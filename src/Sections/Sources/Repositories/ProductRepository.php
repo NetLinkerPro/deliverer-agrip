@@ -94,6 +94,7 @@ class ProductRepository implements ProductRepositoryContract
             }
             DelivererLogger::log(sprintf('Counter %s.', $this->counterProducts));
             if (!$this->isExcludeProduct($product)) {
+                DelivererLogger::log(sprintf('Counter %s.', $this->counterProducts));
                 yield $product;
                 array_push($this->excludeProducts, $product->getId());
                 $this->counterProducts++;
